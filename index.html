@@ -6,133 +6,281 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GOLD AI TRADER</title>
 <style>
+:root{color-scheme:dark;--bg:#090e18;--card:#131d2d;--line:#27364b;--gold:#f6c453;--muted:#9eacc0;--green:#3cdb9a;--red:#ff7272}
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif;padding:20px}
-main{max-width:700px;margin:auto}
-h1{color:#f5c451;margin-bottom:6px}
-p{color:#aeb9d4;line-height:1.5}
-.card{background:#151d33;border:1px solid #293552;border-radius:14px;padding:18px;margin:16px 0}
-.label{color:#aeb9d4;font-size:14px}
-.price{font-size:34px;font-weight:bold;margin:12px 0;color:#f5c451}
-.status{font-size:14px;color:#aeb9d4}
-.warning{color:#ffd479}
-input,button{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #394664;background:#0b1020;color:white;font-size:16px}
-button{background:#f5c451;color:#111827;font-weight:bold;border:0}
-.result{font-size:18px;font-weight:bold;overflow-wrap:anywhere}
-small{color:#aeb9d4;line-height:1.5}
+body{margin:0;background:var(--bg);color:#edf3fc;font:15px Arial,sans-serif}
+header{padding:22px 16px;background:#101a29;border-bottom:1px solid var(--line)}
+h1{margin:0;color:var(--gold);font-size:25px}
+header p{color:var(--muted);margin:8px 0 0;font-size:13px}
+main{max-width:850px;margin:auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 14px}
+.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.price{font-size:32px;font-weight:bold;color:var(--gold);margin:8px 0}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.pill{padding:6px 10px;border-radius:20px;background:#263349;font-size:12px}
+button{background:var(--gold);color:#10131a;border:0;border-radius:9px;padding:11px 14px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6}
+.chart-wrap{width:100%;overflow:hidden;margin:8px 0}
+svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:#0c1421;border-radius:9px;padding:12px}
+.stat small{display:block;color:var(--muted);margin-bottom:7px}
+.stat strong{font-size:17px}
+label{display:block;color:var(--muted);font-size:13px;margin:12px 0 6px}
+input{width:100%;padding:11px;background:#0b1320;color:white;border:1px solid var(--line);border-radius:8px;font-size:16px}
+.result{margin-top:14px;padding:13px;background:#0b1320;border-radius:9px;line-height:1.8}
+.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#211d14;color:#f4dfac;font-size:12px;line-height:1.6;border-radius:5px}
+.good{color:var(--green)}.bad{color:var(--red)}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:12px 0 28px}
+@media(min-width:600px){.statgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
+<header>
+  <h1>GOLD AI TRADER</h1>
+  <p>Gold market monitor · Spot XAU/USD · Demo & learning</p>
+</header>
+
 <main>
-<h1>GOLD AI TRADER</h1>
-<p>Dashboard pemantauan emas · FINEX MT5 Demo</p>
+  <section class="card">
+    <div class="row">
+      <h2>Harga emas spot</h2>
+      <span class="pill" id="connection">Menghubungkan...</span>
+    </div>
+    <div class="price" id="price">Memuat harga...</div>
+    <div class="muted" id="updated">Menunggu data harga</div>
+    <div class="muted" id="source"></div>
+    <div style="margin-top:14px">
+      <button id="refresh">Perbarui data</button>
+    </div>
+  </section>
 
-<section class="card">
-<div class="label">HARGA SPOT EMAS (XAU/USD)</div>
-<div class="price" id="price">Memuat data...</div>
-<div id="status" class="status">Menghubungkan ke sumber harga...</div>
-<p class="warning">Harga spot eksternal, bukan kuotasi resmi FINEX MT5.</p>
-</section>
+  <section class="card">
+    <div class="row">
+      <h2>Grafik intraday XAU/USD</h2>
+      <span class="pill">1 jam terakhir</span>
+    </div>
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 600 250" role="img" aria-label="Grafik harga emas spot">
+        <text x="300" y="125" text-anchor="middle" fill="#9eacc0">Memuat grafik...</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:#f6c453"></i>Harga</span>
+      <span><i class="dot" style="background:#3cdb9a"></i>Rata-rata pendek</span>
+      <span><i class="dot" style="background:#76a9ff"></i>Rata-rata panjang</span>
+    </div>
+    <div class="statgrid" style="margin-top:14px">
+      <div class="stat"><small>Harga tertinggi</small><strong id="high">—</strong></div>
+      <div class="stat"><small>Harga terendah</small><strong id="low">—</strong></div>
+      <div class="stat"><small>Perubahan sampel</small><strong id="change">—</strong></div>
+      <div class="stat"><small>Jumlah data</small><strong id="count">—</strong></div>
+    </div>
+    <p class="muted" id="chartStatus">Menunggu data intraday...</p>
+  </section>
 
-<section class="card">
-<h2>Status Analisis</h2>
-<div class="result">WAIT — Belum ada sinyal terverifikasi</div>
-<p>Dashboard belum menganalisis candle, spread, tren, atau berita. Jangan gunakan status ini sebagai rekomendasi transaksi.</p>
-</section>
+  <section class="card">
+    <h2>Pembacaan tren sederhana</h2>
+    <div class="row">
+      <span class="muted">Pengamatan berdasarkan data intraday</span>
+      <span class="pill" id="trendBadge">MENUNGGU DATA</span>
+    </div>
+    <div style="font-size:20px;font-weight:bold;margin:12px 0" id="trendTitle">Belum cukup data</div>
+    <p class="muted" id="trendText">Analisis akan muncul setelah data harga berhasil dimuat.</p>
+    <div class="notice">
+      Ini bukan sinyal BUY/SELL dan bukan prediksi terjamin. Data spot eksternal dapat berbeda dari harga FINEX MT5. Konfirmasi arah, spread, dan candle pada chart broker sebelum mengambil keputusan.
+    </div>
+  </section>
 
-<section class="card">
-<h2>Kalkulator Risiko</h2>
-<label for="balance">Saldo akun demo (USD)</label>
-<input id="balance" type="number" min="0" step="any" value="50">
-<label for="risk">Risiko per transaksi (%)</label>
-<input id="risk" type="number" min="0.1" max="2" step="0.1" value="0.5">
-<label for="entry">Harga entry</label>
-<input id="entry" type="number" min="0" step="any" placeholder="Masukkan harga entry">
-<label for="stop">Harga stop loss</label>
-<input id="stop" type="number" min="0" step="any" placeholder="Masukkan harga stop loss">
-<button onclick="calculateRisk()">Hitung risiko</button>
-<div id="riskResult" class="result">Masukkan entry dan stop loss.</div>
-<p><small>Kalkulator ini menghitung jarak harga dan batas kerugian uang, bukan ukuran lot. Ukuran lot memerlukan spesifikasi kontrak FINEX yang benar.</small></p>
-</section>
+  <section class="card">
+    <h2>Kalkulator risiko trading</h2>
+    <p class="muted">Menghitung anggaran risiko dan jarak harga. Belum menghitung lot karena spesifikasi kontrak broker harus dipastikan terlebih dahulu.</p>
+    <label for="balance">Saldo akun demo (USD)</label>
+    <input id="balance" type="number" min="0" step="any" value="50">
+    <label for="risk">Risiko per transaksi (%)</label>
+    <input id="risk" type="number" min="0" max="100" step="0.1" value="1">
+    <label for="entry">Harga entry (USD)</label>
+    <input id="entry" type="number" min="0" step="any" placeholder="Contoh: 4200.00">
+    <label for="stop">Harga stop loss (USD)</label>
+    <input id="stop" type="number" min="0" step="any" placeholder="Contoh: 4195.00">
+    <div class="result" id="riskResult">Masukkan harga entry dan stop loss.</div>
+  </section>
 
-<section class="card">
-<h2>Catatan Data</h2>
-<div id="source" class="status">Sumber belum diperiksa.</div>
-<p><small>Harga diperbarui berkala jika koneksi tersedia. Jika gagal, dashboard akan mempertahankan status error dan tidak menganggap harga lama sebagai harga terbaru.</small></p>
-</section>
+  <section class="card">
+    <h2>Catatan penggunaan</h2>
+    <p class="muted">
+      • Data grafik adalah sampel harga spot, bukan candle broker M1/M5.<br>
+      • Rata-rata bergerak hanya alat bantu membaca tren sederhana.<br>
+      • Tidak ada jaminan akurasi atau keuntungan.<br>
+      • Uji strategi di akun demo sebelum mempertimbangkan akun riil.
+    </p>
+  </section>
+  <footer>GOLD AI TRADER · Alat pemantauan dan pembelajaran, bukan nasihat keuangan.</footer>
 </main>
 
 <script>
-const API = "https://xaus.com/api/v1/spot";
+const SPOT_URL = "https://xaus.com/api/v1/spot";
+const INTRADAY_URL = "https://xaus.com/api/v1/intraday?symbol=xau&hours=1";
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString("en-US", {
+  minimumFractionDigits: 2, maximumFractionDigits: 2
+});
 
-function formatPrice(n) {
-  return new Intl.NumberFormat("en-US", {
-    style:"currency", currency:"USD",
-    minimumFractionDigits:2, maximumFractionDigits:2
-  }).format(n);
+function average(values, period) {
+  return values.map((_, i) => {
+    if (i < period - 1) return null;
+    const part = values.slice(i - period + 1, i + 1);
+    return part.reduce((a, b) => a + b, 0) / period;
+  });
 }
 
-async function loadPrice() {
-  const status = document.getElementById("status");
-  const price = document.getElementById("price");
-  const source = document.getElementById("source");
+function drawChart(points) {
+  const svg = $("chart");
+  const W = 600, H = 250, left = 58, right = 12, top = 16, bottom = 28;
+  const values = points.map(p => p.p);
+  const min = Math.min(...values), max = Math.max(...values);
+  const spread = max - min || Math.max(max * 0.001, 1);
+  const lo = min - spread * 0.12, hi = max + spread * 0.12;
+  const x = i => left + i * (W - left - right) / Math.max(values.length - 1, 1);
+  const y = v => top + (hi - v) * (H - top - bottom) / (hi - lo);
+  const path = arr => arr.map((v, i) =>
+    v === null ? "" : (i === 0 || arr[i - 1] === null ? "M" : "L") +
+    x(i).toFixed(1) + "," + y(v).toFixed(1)
+  ).filter(Boolean).join(" ");
 
+  const shortAvg = average(values, 5);
+  const longAvg = average(values, 15);
+  let markup = "";
+  for (let i = 0; i < 5; i++) {
+    const gy = top + i * (H - top - bottom) / 4;
+    const val = hi - i * (hi - lo) / 4;
+    markup += `<line x1="${left}" y1="${gy}" x2="${W-right}" y2="${gy}" stroke="#27364b"/>`;
+    markup += `<text x="${left-7}" y="${gy+4}" fill="#9eacc0" font-size="11" text-anchor="end">${fmt(val)}</text>`;
+  }
+  markup += `<path d="${path(values)}" fill="none" stroke="#f6c453" stroke-width="2.5" stroke-linejoin="round"/>`;
+  markup += `<path d="${path(shortAvg)}" fill="none" stroke="#3cdb9a" stroke-width="2"/>`;
+  markup += `<path d="${path(longAvg)}" fill="none" stroke="#76a9ff" stroke-width="2"/>`;
+  markup += `<text x="${left}" y="${H-7}" fill="#9eacc0" font-size="11">Awal data</text>`;
+  markup += `<text x="${W-right}" y="${H-7}" fill="#9eacc0" font-size="11" text-anchor="end">Data terbaru</text>`;
+  svg.innerHTML = markup;
+
+  $("high").textContent = fmt(max);
+  $("low").textContent = fmt(min);
+  const delta = values[values.length - 1] - values[0];
+  $("change").textContent = (delta >= 0 ? "+" : "") + fmt(delta);
+  $("change").className = delta > 0 ? "good" : delta < 0 ? "bad" : "";
+  $("count").textContent = points.length;
+  $("chartStatus").textContent =
+    "Sampel harga spot berkala; bukan candle OHLC M1/M5 FINEX.";
+  updateTrend(values, shortAvg, longAvg);
+}
+
+function updateTrend(values, shortAvg, longAvg) {
+  const badge = $("trendBadge");
+  const title = $("trendTitle");
+  const text = $("trendText");
+  const n = values.length;
+  if (n < 15) {
+    badge.textContent = "DATA TERBATAS";
+    title.textContent = "Belum cukup data";
+    text.textContent = "Diperlukan setidaknya 15 sampel untuk membandingkan rata-rata bergerak.";
+    return;
+  }
+  const a = shortAvg[n - 1], b = longAvg[n - 1];
+  const recent = values[n - 1] - values[Math.max(0, n - 5)];
+  if (a > b && recent > 0) {
+    badge.textContent = "NAIK";
+    title.textContent = "Kecenderungan naik";
+    text.textContent = "Rata-rata pendek berada di atas rata-rata panjang dan harga sampel terbaru meningkat. Ini pengamatan, bukan sinyal entry.";
+  } else if (a < b && recent < 0) {
+    badge.textContent = "TURUN";
+    title.textContent = "Kecenderungan turun";
+    text.textContent = "Rata-rata pendek berada di bawah rata-rata panjang dan harga sampel terbaru menurun. Ini pengamatan, bukan sinyal entry.";
+  } else {
+    badge.textContent = "CAMPURAN";
+    title.textContent = "Arah belum jelas";
+    text.textContent = "Indikator sederhana belum menunjukkan arah yang selaras. Hindari memaksakan sinyal.";
+  }
+}
+
+async function refreshData() {
+  const btn = $("refresh");
+  btn.disabled = true;
+  $("connection").textContent = "Memuat...";
   try {
-    const response = await fetch(API, {cache:"no-store"});
-    if (!response.ok) throw new Error("HTTP " + response.status);
-
-    const data = await response.json();
-    const value = Number(data?.xau?.price);
-    const time = data?.updated_at || data?.price_as_of;
-
-    if (!Number.isFinite(value) || value <= 0 || !time) {
-      throw new Error("Format data tidak valid");
+    const [spotResponse, intradayResponse] = await Promise.all([
+      fetch(SPOT_URL, {cache:"no-store"}),
+      fetch(INTRADAY_URL, {cache:"no-store"})
+    ]);
+    if (!spotResponse.ok || !intradayResponse.ok) {
+      throw new Error("Server data harga tidak merespons.");
     }
+    const spot = await spotResponse.json();
+    const intraday = await intradayResponse.json();
+    const price = Number(spot?.xau?.price);
+    if (!Number.isFinite(price)) throw new Error("Format harga spot tidak dikenali.");
 
-    const ageSeconds = (Date.now() - Date.parse(time)) / 1000;
-    price.textContent = formatPrice(value);
-
-    const wib = new Date(time).toLocaleString("id-ID", {
-      timeZone:"Asia/Jakarta",
-      dateStyle:"medium", timeStyle:"medium"
-    });
-
-    if (!Number.isFinite(ageSeconds) || ageSeconds > 300 || ageSeconds < -60) {
-      status.textContent = "PERINGATAN: waktu data tidak cukup baru atau tidak valid.";
-    } else {
-      status.textContent = "Data diperbarui: " + wib + " WIB";
-    }
-
-    source.textContent = "Sumber: " + (data.price_source || data.source || "API eksternal")
-      + " · Status penyedia: " + (data.data_state?.status || "tidak diketahui");
-  } catch (error) {
-    status.textContent = "Gagal mengambil harga. Periksa koneksi atau akses API.";
-    source.textContent = "Data belum dapat diverifikasi. " + error.message;
+    $("price").textContent = "$" + fmt(price);
+    const rawTime = spot?.xau?.updated_at || spot?.xau?.price_as_of;
+    $("updated").textContent = rawTime
+      ? "Waktu sumber: " + new Date(rawTime).toLocaleString("id-ID", {timeZone:"Asia/Jakarta"}) + " WIB"
+      : "Waktu pembaruan sumber tidak tersedia.";
+    $("source").textContent = "Sumber: " + (spot?.source || "Xaus") +
+      " · Harga spot eksternal, bukan harga broker.";
+    const points = Array.isArray(intraday?.points)
+      ? intraday.points.map(p => ({t:Number(p.t), p:Number(p.p)}))
+          .filter(p => Number.isFinite(p.t) && Number.isFinite(p.p))
+          .sort((a,b) => a.t - b.t)
+      : [];
+    if (points.length < 2) throw new Error("Data grafik belum cukup.");
+    drawChart(points);
+    $("connection").textContent = "Data diterima";
+    $("connection").className = "pill good";
+  } catch (e) {
+    $("connection").textContent = "Gagal memuat";
+    $("connection").className = "pill bad";
+    $("updated").textContent = "Tidak dapat memperbarui data: " + e.message;
+  } finally {
+    btn.disabled = false;
   }
 }
 
 function calculateRisk() {
-  const balance = Number(document.getElementById("balance").value);
-  const risk = Number(document.getElementById("risk").value);
-  const entry = Number(document.getElementById("entry").value);
-  const stop = Number(document.getElementById("stop").value);
-  const out = document.getElementById("riskResult");
-
-  if (!(balance > 0) || !(risk > 0 && risk <= 2) ||
-      !(entry > 0) || !(stop > 0) || entry === stop) {
-    out.textContent = "Periksa saldo, risiko (maksimal 2%), entry, dan stop loss.";
+  const balance = Number($("balance").value);
+  const riskPct = Number($("risk").value);
+  const entryText = $("entry").value;
+  const stopText = $("stop").value;
+  const result = $("riskResult");
+  if (!(balance > 0) || !(riskPct > 0 && riskPct <= 100)) {
+    result.textContent = "Masukkan saldo positif dan risiko antara 0 hingga 100%.";
     return;
   }
-
-  const riskMoney = balance * risk / 100;
-  out.textContent = "Batas risiko: " + formatPrice(riskMoney)
-    + " · Jarak entry–SL: " + Math.abs(entry - stop).toFixed(2)
-    + " USD per troy ounce. Ukuran lot belum dihitung.";
+  const riskMoney = balance * riskPct / 100;
+  if (entryText === "" || stopText === "") {
+    result.innerHTML = "Anggaran risiko: <strong>$" + fmt(riskMoney) +
+      "</strong><br>Masukkan entry dan stop loss untuk menghitung jarak harga.";
+    return;
+  }
+  const entry = Number(entryText), stop = Number(stopText);
+  if (!(entry > 0) || !(stop > 0) || entry === stop) {
+    result.textContent = "Entry dan stop loss harus positif dan tidak boleh sama.";
+    return;
+  }
+  result.innerHTML = "Anggaran risiko: <strong>$" + fmt(riskMoney) +
+    "</strong><br>Jarak entry ke stop loss: <strong>$" + fmt(Math.abs(entry-stop)) +
+    "</strong><br><span class='muted'>Ini belum menentukan lot, biaya transaksi, slippage, atau nilai pergerakan per lot.</span>";
 }
 
-loadPrice();
-setInterval(loadPrice, 60000);
+["balance","risk","entry","stop"].forEach(id =>
+  $(id).addEventListener("input", calculateRisk)
+);
+$("refresh").addEventListener("click", refreshData);
+calculateRisk();
+refreshData();
+setInterval(refreshData, 60000);
 </script>
 </body>
- </html>
- 
+</html>
