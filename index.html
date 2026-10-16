@@ -1,82 +1,138 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GOLD AI TRADER</title>
 <style>
-body{margin:0;background:#0b1018;color:#f3f5f8;font:16px Arial;padding:18px}
-.card{background:#182231;border:1px solid #344256;border-radius:12px;padding:16px;margin:14px 0}
-h1{color:#f0c66a}label{display:block;margin-top:12px;color:#b7c3d4}
-input,select,button{box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border-radius:8px}
-input,select{background:#0b1018;color:white;border:1px solid #536176}
-button{background:#f0c66a;border:0;font-weight:bold}
-.note{color:#ffdc8b;font-size:14px}
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#eef2ff;font-family:Arial,sans-serif;padding:20px}
+main{max-width:700px;margin:auto}
+h1{color:#f5c451;margin-bottom:6px}
+p{color:#aeb9d4;line-height:1.5}
+.card{background:#151d33;border:1px solid #293552;border-radius:14px;padding:18px;margin:16px 0}
+.label{color:#aeb9d4;font-size:14px}
+.price{font-size:34px;font-weight:bold;margin:12px 0;color:#f5c451}
+.status{font-size:14px;color:#aeb9d4}
+.warning{color:#ffd479}
+input,button{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #394664;background:#0b1020;color:white;font-size:16px}
+button{background:#f5c451;color:#111827;font-weight:bold;border:0}
+.result{font-size:18px;font-weight:bold;overflow-wrap:anywhere}
+small{color:#aeb9d4;line-height:1.5}
 </style>
 </head>
 <body>
-<h1>🟡 GOLD AI TRADER</h1>
-<p>XAUUSD Scalping · FINEX MT5 Demo</p>
+<main>
+<h1>GOLD AI TRADER</h1>
+<p>Dashboard pemantauan emas · FINEX MT5 Demo</p>
 
-<div class="card">
-<h2>Status Market</h2>
-<p>Simbol: XAUUSD</p>
-<p>Harga: Belum terhubung</p>
-<p>Sinyal: <b>WAIT</b></p>
-<p class="note">Dashboard belum menerima data harga live.
-Jangan gunakan untuk entry sungguhan.</p>
-</div>
+<section class="card">
+<div class="label">HARGA SPOT EMAS (XAU/USD)</div>
+<div class="price" id="price">Memuat data...</div>
+<div id="status" class="status">Menghubungkan ke sumber harga...</div>
+<p class="warning">Harga spot eksternal, bukan kuotasi resmi FINEX MT5.</p>
+</section>
 
-<div class="card">
+<section class="card">
+<h2>Status Analisis</h2>
+<div class="result">WAIT — Belum ada sinyal terverifikasi</div>
+<p>Dashboard belum menganalisis candle, spread, tren, atau berita. Jangan gunakan status ini sebagai rekomendasi transaksi.</p>
+</section>
+
+<section class="card">
 <h2>Kalkulator Risiko</h2>
-<label>Saldo akun dalam mata uang akun</label>
-<input id="bal" type="number" value="50" min="0.01">
-<label>Risiko per transaksi (%)</label>
-<input id="risk" type="number" value="0.5" min="0.1" max="1" step="0.1">
-<label>Harga Entry</label>
-<input id="entry" type="number" step="any" placeholder="Harga entry">
-<label>Harga Stop Loss</label>
-<input id="sl" type="number" step="any" placeholder="Harga SL">
-<label>Risk / Reward</label>
-<select id="rr">
-<option value="1.5">1 : 1.5</option>
-<option value="2" selected>1 : 2</option>
-<option value="3">1 : 3</option>
-</select>
-<button onclick="calc()">Hitung Risiko dan TP</button>
-<p id="out">Masukkan data untuk menghitung.</p>
-</div>
+<label for="balance">Saldo akun demo (USD)</label>
+<input id="balance" type="number" min="0" step="any" value="50">
+<label for="risk">Risiko per transaksi (%)</label>
+<input id="risk" type="number" min="0.1" max="2" step="0.1" value="0.5">
+<label for="entry">Harga entry</label>
+<input id="entry" type="number" min="0" step="any" placeholder="Masukkan harga entry">
+<label for="stop">Harga stop loss</label>
+<input id="stop" type="number" min="0" step="any" placeholder="Masukkan harga stop loss">
+<button onclick="calculateRisk()">Hitung risiko</button>
+<div id="riskResult" class="result">Masukkan entry dan stop loss.</div>
+<p><small>Kalkulator ini menghitung jarak harga dan batas kerugian uang, bukan ukuran lot. Ukuran lot memerlukan spesifikasi kontrak FINEX yang benar.</small></p>
+</section>
 
-<div class="card">
-<h2>Aturan Sistem</h2>
-<p>• Filter tren M15</p>
-<p>• Konfirmasi momentum M5</p>
-<p>• Periksa spread dan berita USD</p>
-<p>• Tidak entry jika data tidak valid</p>
-<p>• Semua sinyal perlu diuji dengan akun demo</p>
-</div>
+<section class="card">
+<h2>Catatan Data</h2>
+<div id="source" class="status">Sumber belum diperiksa.</div>
+<p><small>Harga diperbarui berkala jika koneksi tersedia. Jika gagal, dashboard akan mempertahankan status error dan tidak menganggap harga lama sebagai harga terbaru.</small></p>
+</section>
+</main>
 
 <script>
-function calc(){
- const b=+document.getElementById('bal').value;
- const r=+document.getElementById('risk').value;
- const e=+document.getElementById('entry').value;
- const s=+document.getElementById('sl').value;
- const rr=+document.getElementById('rr').value;
- const o=document.getElementById('out');
- if(!(b>0)||!(r>=0.1&&r<=1)){
-  o.textContent='Periksa saldo dan risiko. Gunakan risiko 0,1%–1%.';
-  return;
- }
- let t='Batas risiko terencana: '+(b*r/100).toFixed(2)+
- ' dalam mata uang akun. Kerugian aktual dapat berbeda.';
- if(e>0&&s>0&&e!==s){
-  t+=' | Target TP ilustratif: '+(e+(e>s?1:-1)*Math.abs(e-s)*rr).toFixed(2);
- }
- t+=' | Lot belum dihitung karena spesifikasi kontrak FINEX belum diverifikasi.';
- o.textContent=t;
+const API = "https://xaus.com/api/v1/spot";
+
+function formatPrice(n) {
+  return new Intl.NumberFormat("en-US", {
+    style:"currency", currency:"USD",
+    minimumFractionDigits:2, maximumFractionDigits:2
+  }).format(n);
 }
+
+async function loadPrice() {
+  const status = document.getElementById("status");
+  const price = document.getElementById("price");
+  const source = document.getElementById("source");
+
+  try {
+    const response = await fetch(API, {cache:"no-store"});
+    if (!response.ok) throw new Error("HTTP " + response.status);
+
+    const data = await response.json();
+    const value = Number(data?.xau?.price);
+    const time = data?.updated_at || data?.price_as_of;
+
+    if (!Number.isFinite(value) || value <= 0 || !time) {
+      throw new Error("Format data tidak valid");
+    }
+
+    const ageSeconds = (Date.now() - Date.parse(time)) / 1000;
+    price.textContent = formatPrice(value);
+
+    const wib = new Date(time).toLocaleString("id-ID", {
+      timeZone:"Asia/Jakarta",
+      dateStyle:"medium", timeStyle:"medium"
+    });
+
+    if (!Number.isFinite(ageSeconds) || ageSeconds > 300 || ageSeconds < -60) {
+      status.textContent = "PERINGATAN: waktu data tidak cukup baru atau tidak valid.";
+    } else {
+      status.textContent = "Data diperbarui: " + wib + " WIB";
+    }
+
+    source.textContent = "Sumber: " + (data.price_source || data.source || "API eksternal")
+      + " · Status penyedia: " + (data.data_state?.status || "tidak diketahui");
+  } catch (error) {
+    status.textContent = "Gagal mengambil harga. Periksa koneksi atau akses API.";
+    source.textContent = "Data belum dapat diverifikasi. " + error.message;
+  }
+}
+
+function calculateRisk() {
+  const balance = Number(document.getElementById("balance").value);
+  const risk = Number(document.getElementById("risk").value);
+  const entry = Number(document.getElementById("entry").value);
+  const stop = Number(document.getElementById("stop").value);
+  const out = document.getElementById("riskResult");
+
+  if (!(balance > 0) || !(risk > 0 && risk <= 2) ||
+      !(entry > 0) || !(stop > 0) || entry === stop) {
+    out.textContent = "Periksa saldo, risiko (maksimal 2%), entry, dan stop loss.";
+    return;
+  }
+
+  const riskMoney = balance * risk / 100;
+  out.textContent = "Batas risiko: " + formatPrice(riskMoney)
+    + " · Jarak entry–SL: " + Math.abs(entry - stop).toFixed(2)
+    + " USD per troy ounce. Ukuran lot belum dihitung.";
+}
+
+loadPrice();
+setInterval(loadPrice, 60000);
 </script>
 </body>
-  </html>
-  
+ </html>
+ 
