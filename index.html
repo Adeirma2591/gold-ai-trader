@@ -1,444 +1,51 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#08111f">
-<title>GOLD AI TRADER</title>
+<title>GOLD AI TRADER — Screenshot Analysis</title>
 <style>
 :root{
-  --bg:#07101d;--panel:#101c2d;--line:#24354c;
-  --text:#edf4ff;--muted:#93a5bd;--gold:#f5c451;
-  --green:#36d399;--red:#ff6878;--blue:#6ba7ff;
+  --bg:#07101c;--panel:#101c2c;--line:#293b52;
+  --text:#edf4ff;--muted:#9aabc0;--gold:#f3c65b;
+  --green:#36d399;--red:#ff6878;--blue:#70a9ff;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-}
-header{
-  padding:22px 16px 18px;
-  background:linear-gradient(135deg,#142641,#091321);
-  border-bottom:1px solid var(--line);
-}
-.wrap{max-width:900px;margin:auto}
-.brand{font-size:23px;font-weight:900;letter-spacing:1px}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:Arial,Helvetica,sans-serif}
+header{padding:20px 15px;background:linear-gradient(135deg,#172d49,#091321);
+border-bottom:1px solid var(--line)}
+.wrap{max-width:850px;margin:auto}
+.brand{font-size:25px;font-weight:900;letter-spacing:.5px}
 .brand span{color:var(--gold)}
-.sub{font-size:12px;color:var(--muted);margin-top:5px}
-main{max-width:900px;margin:auto;padding:14px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.card{
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:15px;padding:15px;margin-bottom:12px;min-width:0;
-}
-.full{grid-column:1/-1}
-.label{font-size:12px;color:var(--muted)}
-.price{font-size:clamp(25px,6vw,36px);font-weight:850;color:var(--gold);margin:8px 0}
-h2{font-size:16px;margin:0 0 13px}
-h3{font-size:14px;margin:0 0 8px}
-.small{font-size:12px;color:var(--muted);line-height:1.6}
-button{
-  background:var(--gold);color:#101827;border:0;border-radius:10px;
-  padding:11px 14px;font-weight:800;font-size:13px;cursor:pointer;
-}
-button:disabled{opacity:.6}
-.secondary{background:#23354c;color:var(--text)}
-.status{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
-.pill{display:inline-block;border-radius:20px;padding:6px 10px;font-size:12px;font-weight:800;background:#26364a}
-.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
-.blue{color:var(--blue)}
-canvas,svg{width:100%;display:block}
-.chartbox{height:210px;overflow:hidden}
-input,select{
-  width:100%;padding:11px;background:#081321;border:1px solid var(--line);
-  border-radius:9px;color:var(--text);font-size:14px;margin-top:5px;
-}
-.field{margin-bottom:12px}
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.result{padding:10px;background:#0a1524;border-radius:9px;margin-top:8px;font-size:13px;line-height:1.7}
-hr{border:0;border-top:1px solid var(--line);margin:14px 0}
-footer{text-align:center;padding:15px 10px 30px;color:var(--muted);font-size:11px;line-height:1.7}
-@media(max-width:480px){
- main{padding:10px}.card{padding:12px}.grid{gap:8px}
- .fields{gap:8px}.chartbox{height:180px}
-}
-</style>
-</head>
-<body>
-<header>
-  <div class="wrap">
-    <div class="brand">GOLD <span>AI TRADER</span></div>
-    <div class="sub">XAUUSD · MARKET DASHBOARD · DEMO FIRST</div>
-  </div>
-</header>
-
-<main>
-  <div class="grid">
-    <section class="card">
-      <div class="label">HARGA EMAS SPOT · USD / TROY OUNCE</div>
-      <div id="price" class="price">Memuat...</div>
-      <div id="priceTime" class="small">Menunggu data harga</div>
-      <div id="priceStatus" class="status">Menghubungkan ke sumber data...</div>
-    </section>
-
-    <section class="card">
-      <div class="label">ANALISIS TREN SEDERHANA</div>
-      <div id="trend" style="font-size:21px;font-weight:850;margin:12px 0">MENUNGGU DATA</div>
-      <div id="trendDetail" class="small">Analisis akan muncul setelah data grafik tersedia.</div>
-      <hr>
-      <div class="label">JUMLAH TITIK GRAFIK</div>
-      <div id="pointCount" style="font-size:20px;font-weight:800;margin-top:6px">0</div>
-    </section>
-
-    <section class="card full">
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
-        <h2>Grafik XAUUSD · 24 Jam</h2>
-        <button id="refreshBtn" onclick="refreshData()">↻ Perbarui Data</button>
-      </div>
-      <div class="chartbox" id="chart">
-        <div class="status">Memuat grafik...</div>
-      </div>
-      <div id="chartStatus" class="status">Mengambil data historis...</div>
-      <div class="small">Grafik berasal dari sumber data eksternal, bukan candle langsung FINEX MT5.</div>
-    </section>
-
-    <section class="card full">
-      <h2>Ringkasan Pergerakan</h2>
-      <div class="fields">
-        <div><div class="label">Harga awal periode</div><div id="firstPrice">—</div></div>
-        <div><div class="label">Harga terbaru pada grafik</div><div id="lastPrice">—</div></div>
-        <div><div class="label">Perubahan periode</div><div id="change">—</div></div>
-        <div><div class="label">Kondisi data</div><div id="dataQuality">Menunggu data</div></div>
-      </div>
-      <div id="analysisNote" class="result">Analisis belum tersedia. Tunggu data grafik berhasil dimuat.</div>
-    </section>
-
-    <section class="card full">
-      <h2>Kalkulator Risiko Trading</h2>
-      <div class="small">Perkiraan perencanaan risiko. Hasil lot merupakan estimasi dan wajib disesuaikan dengan spesifikasi kontrak broker.</div>
-      <div class="fields">
-        <div class="field">
-          <label class="label" for="balance">Modal akun (USD)</label>
-          <input id="balance" type="number" value="100" min="0" step="any">
-        </div>
-        <div class="field">
-          <label class="label" for="risk">Risiko (%)</label>
-          <input id="risk" type="number" value="1" min="0.1" max="100" step="0.1">
-        </div>
-        <div class="field">
-          <label class="label" for="entry">Harga entry</label>
-          <input id="entry" type="number" value="4166" min="0" step="any">
-        </div>
-        <div class="field">
-          <label class="label" for="stop">Harga stop loss</label>
-          <input id="stop" type="number" value="4156" min="0" step="any">
-        </div>
-        <div class="field">
-          <label class="label" for="target">Harga take profit</label>
-          <input id="target" type="number" value="4186" min="0" step="any">
-        </div>
-        <div class="field">
-          <label class="label" for="direction">Arah posisi</label>
-          <select id="direction">
-            <option value="buy">BUY / Beli</option>
-            <option value="sell">SELL / Jual</option>
-          </select>
-        </div>
-        <div class="field full">
-          <label class="label" for="contract">Ukuran kontrak (troy ounce per 1 lot)</label>
-          <input id="contract" type="number" value="100" min="0.01" step="any">
-        </div>
-      </div>
-      <button onclick="calculateRisk()">Hitung Risiko</button>
-      <div id="riskResult" class="result">Masukkan parameter lalu tekan Hitung Risiko.</div>
-      <div class="small">Nilai kontrak default 100 oz hanya contoh. Periksa spesifikasi XAUUSD di FINEX MT5. Perhitungan belum memasukkan spread, komisi, swap, atau slippage.</div>
-    </section>
-
-    <section class="card full">
-      <h2>Jam Pantauan · WIB</h2>
-      <div id="clock" style="font-size:23px;font-weight:850">--:--:-- WIB</div>
-      <div class="small">Jam ini menunjukkan waktu Indonesia Barat, bukan konfirmasi bahwa pasar atau broker sedang menerima transaksi.</div>
-    </section>
-
-    <section class="card full">
-      <h2>Informasi Sistem</h2>
-      <div class="small">
-        <p>• Sumber harga: XAU spot dari xaus.com.</p>
-        <p>• Sumber grafik: data historis yang disediakan endpoint xaus.com.</p>
-        <p>• Analisis tren memakai perbandingan moving average sederhana; bukan model AI yang terlatih atau prediksi pasti.</p>
-        <p>• Aplikasi ini tidak terhubung ke akun FINEX, tidak mengeksekusi order, dan tidak membaca candle broker secara langsung.</p>
-      </div>
-    </section>
-  </div>
-</main>
-
-<footer>
-  GOLD AI TRADER · Alat bantu analisis, bukan nasihat keuangan.<br>
-  Tidak ada jaminan akurasi atau keuntungan. Gunakan akun demo dan batasi risiko.
-</footer>
-
-<script>
-"use strict";
-
-const SPOT_URL = "https://xaus.com/api/v1/spot";
-const INTRADAY_URL = "https://xaus.com/api/v1/intraday?symbol=xau&hours=24";
-
-const $ = id => document.getElementById(id);
-
-function money(value, digits=2) {
-  if (!Number.isFinite(value)) return "—";
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits
-  });
-}
-
-function dateTime(value) {
-  if (!value) return "Waktu tidak tersedia";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", second: "2-digit"
-  }) + " WIB";
-}
-
-function setText(id, value) {
-  $(id).textContent = value;
-}
-
-function showError(id, message) {
-  setText(id, message);
-}
-
-async function fetchJSON(url) {
-  const response = await fetch(url, {cache:"no-store"});
-  if (!response.ok) throw new Error("HTTP " + response.status);
-  return await response.json();
-}
-
-/* Harga spot dimuat secara terpisah agar grafik gagal
-   tidak menghalangi harga untuk tampil. */
-async function loadSpot() {
-  try {
-    const data = await fetchJSON(SPOT_URL);
-    const item = data && data.xau;
-    const price = Number(item && item.price);
-
-    if (!Number.isFinite(price) || price <= 0) {
-      throw new Error("Format harga tidak valid");
-    }
-
-    setText("price", "$" + money(price));
-    setText("priceTime", "Pembaruan sumber: " + dateTime(data.updated_at));
-    setText("priceStatus", "Harga spot eksternal berhasil dimuat.");
-    setText("dataQuality", "Harga spot tersedia");
-
-    // Mengisi entry kalkulator hanya bila pengguna belum mengubahnya.
-    const entry = $("entry");
-    if (!entry.dataset.edited) entry.value = price.toFixed(2);
-    return true;
-  } catch (error) {
-    setText("priceStatus", "Harga gagal dimuat: " + error.message);
-    return false;
-  }
-}
-
-function drawChart(points) {
-  const box = $("chart");
-  const width = Math.max(300, box.clientWidth || 600);
-  const height = 210;
-  const pad = {l:12, r:12, t:16, b:24};
-  const values = points.map(p => p.p);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const x = i => pad.l + i * (width-pad.l-pad.r) / Math.max(1, points.length-1);
-  const y = v => pad.t + (max-v) * (height-pad.t-pad.b) / range;
-
-  let line = "";
-  let area = "";
-  points.forEach((p,i) => {
-    const point = `${x(i).toFixed(1)},${y(p.p).toFixed(1)}`;
-    line += (i ? " L " : "M ") + point;
-    area += (i ? " L " : "M ") + point;
-  });
-
-  area += ` L ${x(points.length-1)},${height-pad.b} L ${x(0)},${height-pad.b} Z`;
-  const rising = points[points.length-1].p >= points[0].p;
-  const color = rising ? "#36d399" : "#ff6878";
-
-  box.innerHTML = `
-  <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafik harga emas 24 jam">
-    <line x1="${pad.l}" y1="${pad.t}" x2="${width-pad.r}" y2="${pad.t}" stroke="#24354c"/>
-    <line x1="${pad.l}" y1="${height/2}" x2="${width-pad.r}" y2="${height/2}" stroke="#24354c" stroke-dasharray="4 4"/>
-    <line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#24354c"/>
-    <path d="${area}" fill="${color}" opacity=".12"/>
-    <path d="${line}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    <text x="${pad.l}" y="11" fill="#93a5bd" font-size="10">$${money(max)}</text>
-    <text x="${pad.l}" y="${height-5}" fill="#93a5bd" font-size="10">$${money(min)}</text>
-    <circle cx="${x(points.length-1)}" cy="${y(points[points.length-1].p)}" r="3.5" fill="${color}"/>
-  </svg>`;
-}
-
-function sma(values, period) {
-  if (values.length < period) return null;
-  const sample = values.slice(-period);
-  return sample.reduce((sum,v) => sum+v, 0) / sample.length;
-}
-
-function analyze(points) {
-  const prices = points.map(p=>p.p);
-  const first = prices[0];
-  const last = prices[prices.length-1];
-  const change = last-first;
-  const pct = first ? change/first*100 : 0;
-  const shortMA = sma(prices, 5);
-  const longMA = sma(prices, 20);
-
-  setText("firstPrice", "$"+money(first));
-  setText("lastPrice", "$"+money(last));
-  setText("change", (change>=0?"+":"")+"$"+money(change)+" ("+(pct>=0?"+":"")+pct.toFixed(3)+"%)");
-  $("change").className = change>=0 ? "green" : "red";
-  setText("pointCount", String(points.length));
-  setText("dataQuality", "Grafik tersedia");
-
-  let title = "NETRAL";
-  let detail = "Arah harga belum menunjukkan kecenderungan yang jelas.";
-  let cls = "gold";
-
-  if (shortMA !== null && longMA !== null) {
-    if (shortMA > longMA && last > shortMA) {
-      title = "CENDERUNG NAIK"; detail = "MA pendek di atas MA panjang dan harga di atas MA pendek."; cls = "green";
-    } else if (shortMA < longMA && last < shortMA) {
-      title = "CENDERUNG TURUN"; detail = "MA pendek di bawah MA panjang dan harga di bawah MA pendek."; cls = "red";
-    } else {
-      detail = "Sinyal moving average bercampur. Tunggu konfirmasi.";
-    }
-  } else {
-    detail = "Data belum cukup untuk membandingkan MA 5 dan MA 20.";
-  }
-
-  setText("trend", title);
-  $("trend").className = cls;
-  setText("trendDetail", detail);
-  setText("analysisNote",
-    `Perubahan selama periode yang tersedia: ${(pct>=0?"+":"")+pct.toFixed(3)}%. `+
-    `Analisis MA: ${title}. Ini hanya ringkasan historis, bukan sinyal BUY/SELL. `+
-    `Data historis eksternal tidak menjamin harga broker sama.`);
-}
-
-async function loadIntraday() {
-  try {
-    const data = await fetchJSON(INTRADAY_URL);
-    const raw = Array.isArray(data.points) ? data.points : [];
-    const points = raw.map(p => ({
-      t:Number(p.t),
-      p:Number(p.p)
-    })).filter(p => Number.isFinite(p.t) && Number.isFinite(p.p) && p.p>0)
-      .sort((a,b)=>a.t-b.t);
-
-    if (points.length < 2) {
-      throw new Error("Data grafik belum cukup. Coba lagi nanti.");
-    }
-
-    drawChart(points);
-    analyze(points);
-    setText("chartStatus",
-      `${points.length} titik data · rentang 24 jam · sumber eksternal`);
-    return true;
-  } catch (error) {
-    setText("chart", "");
-    setText("chartStatus", "Grafik gagal dimuat: " + error.message);
-    setText("trend", "DATA BELUM CUKUP");
-    setText("trendDetail", "Harga spot masih dapat dimuat secara terpisah.");
-    setText("analysisNote", "Belum dapat menganalisis tren karena data grafik tidak tersedia.");
-    setText("pointCount", "0");
-    setText("dataQuality", "Grafik tidak tersedia");
-    return false;
-  }
-}
-
-async function refreshData() {
-  const button = $("refreshBtn");
-  button.disabled = true;
-  button.textContent = "Memuat...";
-  setText("priceStatus", "Memeriksa harga spot...");
-  setText("chartStatus", "Memeriksa data grafik...");
-
-  // Kedua permintaan tidak saling menggagalkan.
-  await Promise.allSettled([loadSpot(), loadIntraday()]);
-
-  button.disabled = false;
-  button.textContent = "↻ Perbarui Data";
-}
-
-function calculateRisk() {
-  const balance = Number($("balance").value);
-  const riskPct = Number($("risk").value);
-  const entry = Number($("entry").value);
-  const stop = Number($("stop").value);
-  const target = Number($("target").value);
-  const contract = Number($("contract").value);
-  const direction = $("direction").value;
-
-  if (![balance,riskPct,entry,stop,target,contract].every(Number.isFinite) ||
-      balance<=0 || riskPct<=0 || riskPct>100 || entry<=0 || stop<=0 ||
-      target<=0 || contract<=0) {
-    setText("riskResult", "Periksa input. Semua angka harus valid dan lebih besar dari nol.");
-    return;
-  }
-
-  const valid = direction==="buy"
-    ? stop<entry && target>entry
-    : stop>entry && target<entry;
-
-  if (!valid) {
-    setText("riskResult",
-      direction==="buy"
-      ? "Untuk BUY, stop loss harus di bawah entry dan take profit harus di atas entry."
-      : "Untuk SELL, stop loss harus di atas entry dan take profit harus di bawah entry.");
-    return;
-  }
-
-  const riskMoney = balance*riskPct/100;
-  const slDistance = Math.abs(entry-stop);
-  const tpDistance = Math.abs(target-entry);
-  const estimatedLot = riskMoney/(slDistance*contract);
-  const rewardRisk = tpDistance/slDistance;
-  const profitEstimate = tpDistance*contract*estimatedLot;
-
-  setText("riskResult",
-    `Risiko uang: $${money(riskMoney)}\n\n`+
-    `Jarak stop loss: $${money(slDistance,2)}\n`+
-    `Jarak take profit: $${money(tpDistance,2)}\n`+
-    `Estimasi ukuran posisi: ${estimatedLot.toFixed(3)} lot\n`+
-    `Rasio risiko/imbalan: 1:${rewardRisk.toFixed(2)}\n`+
-    `Potensi untung teoritis: $${money(profitEstimate)} sebelum biaya.\n\n`+
-    `Periksa ukuran kontrak, minimum lot, dan nilai tick FINEX sebelum menggunakan hasil ini.`);
-}
-
-["balance","risk","entry","stop","target","contract","direction"].forEach(id=>{
-  $(id).addEventListener("input",()=>{
-    if(id==="entry") $("entry").dataset.edited="true";
-  });
-});
-
-function updateClock() {
-  setText("clock", new Date().toLocaleTimeString("id-ID", {
-    timeZone:"Asia/Jakarta", hour12:false
-  })+" WIB");
-}
-
-updateClock();
-setInterval(updateClock,1000);
-refreshData();
-setInterval(refreshData,60000);
-window.addEventListener("resize",()=>{
-  // Grafik digambar ulang saat data berikutnya dimuat.
-});
-</script>
-</body>
-        </html>
-                                                         
+.sub{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
+main{max-width:850px;margin:auto;padding:13px}
+.card{background:var(--panel);border:1px solid var(--line);
+border-radius:15px;padding:15px;margin-bottom:13px}
+h2{font-size:16px;margin:0 0 12px}
+p{font-size:13px;line-height:1.7;color:var(--muted)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px;border-radius:9px;
+border:1px solid var(--line);background:#091422;color:var(--text);
+font-size:14px;outline:none}
+input[type=file]{padding:10px;font-size:12px}
+textarea{min-height:75px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin-bottom:13px}
+.btn{width:100%;border:0;border-radius:10px;padding:13px;
+font-size:14px;font-weight:800;cursor:pointer;margin-top:7px}
+.primary{background:var(--gold);color:#171307}
+.secondary{background:#1d3553;color:#fff;border:1px solid #38516f}
+.danger{background:#3b202b;color:#ffdce1;border:1px solid #743747}
+.preview{display:none;width:100%;max-height:420px;object-fit:contain;
+background:#050a12;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+.filemeta{font-size:11px;color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
+.pill{display:inline-block;border:1px solid var(--line);padding:5px 9px;
+border-radius:20px;font-size:11px;color:var(--gold);margin-bottom:10px}
+.notice{border-left:3px solid var(--gold);padding:10px 12px;
+background:#1b1b19;border-radius:5px;font-size:12px;line-height:1.7;color:#e6d9b2}
+#clock{font-weight:800;color:var(--green);font-size:18px}
+#output{min-height:180px;font-size:12px;line-height:1.6}
+footer
